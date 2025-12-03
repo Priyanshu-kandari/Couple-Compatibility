@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Couple Compatibility</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="container">
+
+        <!-- Screen1 -->
+         <div id="screen-room" class="screen active">
+            <h1 class="title">💞Couple Compatibility</h1>
+
+
+            <div class="card">
+                <h2>CREATE ROOM</h2>
+                <input id="createRoomInput" type="text" class="input" placeholder="Enter new room name">
+                <button id="createRoomBtn" class="btn">CREATE ROOM</button>
+            </div>
+
+            <div id="divider">OR</div>
+
+            <div class="card">
+                <h2>JOIN ROOM</h2>
+                <input id="joinRoomInput" type="text" class="input" placeholder="Enter new room name">
+                <button id="JoinRoomBtn" class="btn">JOIN ROOM</button>
+            </div>
+
+         </div>
+
+
+         <!-- screen2 -->
+          <div id="screen-questions" class="screen hidden">
+            <h1 class="title">💕 Answer these Questions</h1>
+
+            <textarea  id="q1" class="textarea" placeholder="1. What does love mean to you?"></textarea>
+            <textarea  id="q2" class="textarea" placeholder="2. What makes a relationship strong?"></textarea>
+            <textarea  id="q3" class="textarea" placeholder="3. What is a deal-breaker for you?"></textarea>
+
+            <button id="submitAnswersBtn" class="btn">SUBMIT ANSWERS</button>
+
+          </div>
+
+
+          <!-- screen3 -->
+           <div id="screen-result" class="screen hidden">
+            <h1 class="title">💘 Compatibility Result</h1>
+
+            <div class="result-card">
+                <h2 id="compatibilityScore">Score: --%</h2>
+                <p id="compatibilityText">Waiting for AI analysis…</p>
+            </div>
+            </div>
+    </div>
+    <div id="credit"><a href="https://www.instagram.com/preyanshuuu">Developed by Priyanshu Kandari</a></div>
+    <script type="module">
+  import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai@0.4.0";
+  window.GoogleGenerativeAI = GoogleGenerativeAI;
+</script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+/* --- 1. Variables & Reset --- */
+:root {
+  --bg-color: #f4f1ea;       /* Warm paper/cream */
+  --card-bg: #ffffff;
+  --accent: #8a1c1c;         /* Deep Burgundy */
+  --text-main: #2c2c2c;      /* Charcoal */
+  --text-sub: #666666;
+  --border: #e0e0e0;
+}
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body{
+  min-height: 100vh;
+  gap: 50px;
+  background-color: var(--bg-color);
+  font-family: 'Montserrat', sans-serif;
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-image: radial-gradient(#d1d1d1 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+#container{
+  background-color: var(--card-bg);
+  width: 100%;
+  max-width: 480px;
+  padding: 3.5rem 2.5rem;
+  /* Sophisticated shadow: soft and spread out */
+  box-shadow: 0 20px 60px rgba(0,0,0,0.08); 
+  position: relative;
+  /* No rounded corners - keep it sharp and editorial */
+  border: 1px solid white;
+}
+
+
+/* A decorative border inside the card for that "Invitation" look */
+#container::after {
+  content: "";
+  position: absolute;
+  top: 10px; left: 10px; right: 10px; bottom: 10px;
+  border: 1px solid var(--border);
+  pointer-events: none;
+  z-index: 0;
+}
+
+
+/* Ensure content sits above the decorative border */
+.screen {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- 3. Typography --- */
+.title {
+  font-family: serif;
+  font-size: 2.8rem;
+  font-style: italic;
+  font-weight: 600;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 2.5rem;
+  line-height: 1;
+}
+
+
+h2 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-sub);
+  margin-bottom: 1rem;
+  text-align: left;
+  font-weight: 500;
+}
+
+/* --- 4. Inputs & Textareas (Minimalist) --- */
+.card {
+  margin-bottom: 2rem;
+}
+
+.input, .textarea{
+  width: 100%;
+  background: transparent;
+  border: none;
+  /* Only bottom border */
+  border-bottom: 1px solid #ccc; 
+  padding: 10px 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  color: var(--text-main);
+  border-radius: 0; /* Remove browser default rounding */
+  transition: border-color 0.3s ease;
+}
+
+.input::placeholder, .textarea::placeholder {
+  color: #aaa;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 300;
+}
+
+.input:focus, .textarea:focus {
+  outline: none;
+  border-bottom: 1px solid var(--accent);
+}
+
+.textarea {
+  height: 60px;
+  resize: none;
+  line-height: 1.4;
+}
+
+.btn{
+  width: 100%;
+  background-color: var(--text-main);
+  color: white;
+  border: none;
+  padding: 16px;
+  margin-top: 10px;
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 10px;
+}
+
+.btn:hover {
+  background-color: var(--accent);
+  letter-spacing: 5px;
+}
+
+
+/* --- 6. Divider --- */
+#divider {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #bbb;
+  margin: 1.5rem 0;
+  font-style: italic;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+
+/* --- 7. Result Screen --- */
+.result-card {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+#compatibilityScore {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 5rem;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 1rem;
+}
+
+#compatibilityText {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text-sub);
+  line-height: 1.6;
+  max-width: 80%;
+  margin: 0 auto;
+}
+
+/* --- 8. Utilities --- */
+.hidden {
+  display: none;
+}
+
+.active {
+  animation: fadeIn 0.8s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+#credit {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.7rem;
+  text-transform: uppercase; /* Makes it look premium */
+  letter-spacing: 2px;
+  color: #888;
+  margin-top: 10px;
+  text-align: center;
+  opacity: 0.8;
+}
+
+#credit a {
+  text-decoration: none;
+  color: var(--text-main);
+  font-weight: 600;
+  transition: color 0.3s ease;
+  border-bottom: 1px solid transparent;
+}
+
+#credit a:hover {
+  color: var(--accent);
+  border-bottom: 1px solid var(--accent);
+}
+
+@media (max-width: 500px){
+
+  body{
+    padding: 25px;
+    gap: 20px;
+  }
+
+  #container{
+    padding: 2.5rem 1.5rem; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  }
+
+  #container::after {
+    top: 6px; left: 6px; right: 6px; bottom: 6px;
+  }
+
+  .title {
+    font-size: 2.2rem;
+    line-height: 1.2;
+    margin-bottom: 2rem;
+  }
+
+  h2 {
+    font-size: 0.7rem;
+  }
+
+  .input, .textarea {
+    font-size: 1.1rem;
+  }
+
+  #compatibilityScore {
+    font-size: 4rem; /* Prevent score from breaking line */
+  }
+
+  #credit {
+    font-size: 0.6rem; /* Make credit smaller on mobile */
+    letter-spacing: 1.5px;
+  }
+}
