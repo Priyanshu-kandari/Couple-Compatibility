@@ -1,4 +1,7 @@
 // api/evaluate.js
+// Pure thought-based comparison - analyzes underlying beliefs, not surface wording
+// Integrates with your Couple Compatibility app
+
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
@@ -9,54 +12,78 @@ export default async function handler(req, res) {
     const AI_KEY = process.env.AI_STUDIO_KEY;
     if (!AI_KEY) return res.status(500).json({ error: "Missing AI key on server" });
 
-    // Model / endpoint (change if needed)
     const MODEL = "models/gemini-2.5-flash";
     const url = `https://generativelanguage.googleapis.com/v1/${MODEL}:generateContent?key=${AI_KEY}`;
 
-    // Controlled taxonomy of canonical relationship belief tags
-    const TAXONOMY = [
-      "trust",
-      "honesty_transparency",
-      "emotional_safety",
-      "communication",
-      "emotional_maturity",
-      "effort_consistency",
-      "need_for_space",
-      "need_for_closeness",
-      "boundaries",
-      "respect",
-      "loyalty_commitment",
-      "family_goals",
-      "lifestyle_match",
-      "conflict_style",
-      "supportiveness",
-      "financial_values",
-      "ambition_drive",
-      "humor_playfulness"
-    ];
+    // Enhanced prompt specifically for relationship questions
+    const prompt = `SYSTEM: You are an expert relationship psychologist analyzing compatibility between two partners based on DEEP UNDERLYING BELIEFS AND VALUES, completely ignoring surface-level word choices.
 
-    // Prompt asks the model to map each answer to tags from TAXONOMY and give brief explanations.
-    const prompt = `You are an expert relationship counselor and compatibility analyst.
-IMPORTANT: Output JSON ONLY (no markdown, no extra text). The JSON must have keys: tagsA, tagsB, explanationsA, explanationsB.
-- tagsA and tagsB: arrays of canonical tags (choose zero or more) from this exact taxonomy: ${JSON.stringify(TAXONOMY)}.
-- explanationsA and explanationsB: objects mapping each assigned tag to a 1-2 sentence explanation of why that tag applies to Person A / Person B's answers.
-- DO NOT invent new tags. DO NOT output any fields other than the four required.
-- DO NOT base tagging on word overlap. Map to the underlying beliefs, priorities, and emotional drivers revealed in the answers.
-- Keep explanations short (max 30 words each).
+CRITICAL: Your analysis must focus on the MEANING and EMOTIONAL TRUTH behind their words, not the vocabulary they use. Two people can express the same core belief using completely different words, and that should result in HIGH compatibility.
+
+Task: 
+1. Extract the TRUE CORE BELIEFS from each person's three relationship answers:
+   - What they fundamentally value in relationships
+   - What emotional needs drive their behavior
+   - What they fear or want to avoid
+   - How they conceptualize love and partnership
+   
+2. Compare these beliefs at a SEMANTIC level to determine thought alignment
+
+3. Output JSON ONLY (no markdown fences, no extra text)
+
+Required JSON structure:
+{
+  "personA": {
+    "coreBeliefs": ["belief statement", "belief statement"],
+    "emotionalDrivers": ["what truly motivates them", "what they seek"],
+    "relationshipPhilosophy": "one-sentence summary of their relationship worldview",
+    "underlyingFears": ["fear 1", "fear 2"]
+  },
+  "personB": {
+    "coreBeliefs": ["belief statement", "belief statement"],
+    "emotionalDrivers": ["what truly motivates them", "what they seek"],
+    "relationshipPhilosophy": "one-sentence summary of their relationship worldview",
+    "underlyingFears": ["fear 1", "fear 2"]
+  },
+  "thoughtAlignment": {
+    "sharedBeliefs": [
+      {
+        "beliefTheme": "brief theme",
+        "howAExpressesIt": "their core thought",
+        "howBExpressesIt": "their core thought",
+        "whyItMatches": "why these thoughts align (20 words max)"
+      }
+    ],
+    "divergentBeliefs": [
+      {
+        "beliefTheme": "brief theme",
+        "personAView": "their underlying position",
+        "personBView": "their underlying position",
+        "tension": "what friction this creates (20 words max)"
+      }
+    ]
+  },
+  "compatibilityScore": 0-100,
+  "analysisExplanation": "2-3 sentences explaining the score based purely on thought-level alignment or misalignment"
+}
+
+RULES (follow strictly):
+- Focus on CONCEPTS and MEANINGS, never on word matching
+- If Person A says "trust" and Person B says "honesty", recognize these may reflect the same underlying value
+- If both emphasize commitment using different language, that's HIGH alignment
+- If one values independence and the other values interdependence, that's a meaningful difference even if they both use the word "love"
+- Empty arrays are acceptable if a category doesn't strongly apply
+- Score should reflect: Do their fundamental relationship beliefs complement or clash?
 
 Person A answers:
-${typeof a === "string" ? a : JSON.stringify(a, null, 2)}
+Q1: ${a.q1 || ""}
+Q2: ${a.q2 || ""}
+Q3: ${a.q3 || ""}
 
 Person B answers:
-${typeof b === "string" ? b : JSON.stringify(b, null, 2)}
-
-Return only JSON like:
-{
-  "tagsA": ["trust","communication"],
-  "tagsB": ["trust","emotional_safety"],
-  "explanationsA": {"trust":"...","communication":"..."},
-  "explanationsB": {"trust":"...","emotional_safety":"..."}
-}
+Q1: ${b.q1 || ""}
+Q2: ${b.q2 || ""}
+Q3: ${b.q3 || ""}
 `;
 
     const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
@@ -67,15 +94,11 @@ Return only JSON like:
       body: JSON.stringify(payload),
     });
 
-    if (!r.ok) {
-      const text = await r.text().catch(() => "");
-      console.error("AI API error", r.status, text);
-      return res.status(502).json({ error: "AI API error", details: text });
-    }
+    const raw = await r.text().catch(() => "");
+    let apiResp;
+    try { apiResp = JSON.parse(raw); } catch (e) { apiResp = raw; }
 
-    const json = await r.json();
-
-    // Collect possible text outputs
+    // Extract text from API response
     function collectText(obj, out = []) {
       if (!obj || typeof obj !== "object") return out;
       for (const k of Object.keys(obj)) {
@@ -86,11 +109,10 @@ Return only JSON like:
       }
       return out;
     }
-    const textCandidates = collectText(json).join("\n\n") || JSON.stringify(json);
+    const textCandidates = (typeof apiResp === "string") ? apiResp : collectText(apiResp).join("\n\n");
+    let cleaned = (textCandidates || "").replace(/```(?:json)?/gi, "").replace(/```/g, "").trim();
 
-    // Strip code fences and extract first balanced JSON object
-    let cleaned = textCandidates.replace(/```(?:json)?/gi, "").replace(/```/g, "").trim();
-
+    // Extract first balanced JSON
     function extractFirstJson(str) {
       const start = str.indexOf("{");
       if (start === -1) return null;
@@ -105,110 +127,85 @@ Return only JSON like:
       }
       return null;
     }
+    const jsonText = extractFirstJson(cleaned) || (cleaned.match(/\{[\s\S]*\}/) || [null])[0];
 
-    let jsonText = extractFirstJson(cleaned) || (cleaned.match(/\{[\s\S]*\}/) || [null])[0];
-
-    let parsedTagsResp = null;
+    let parsed = null;
     if (jsonText) {
-      // Normalize keys to quoted
       let candidate = jsonText.replace(/,(\s*[}\]])/g, "$1").replace(/([{,]\s*)([A-Za-z0-9_]+)\s*:/g, '$1"$2":');
-      try {
-        parsedTagsResp = JSON.parse(candidate);
-      } catch (e) {
-        // parsing failed - keep null to fallback
-        console.error("Failed parsing model JSON:", e.message);
+      try { parsed = JSON.parse(candidate); } catch (e) { 
+        parsed = { parseError: e.message }; 
       }
     }
 
-    // Validate shape
-    if (
-      !parsedTagsResp ||
-      !Array.isArray(parsedTagsResp.tagsA) ||
-      !Array.isArray(parsedTagsResp.tagsB) ||
-      typeof parsedTagsResp.explanationsA !== "object" ||
-      typeof parsedTagsResp.explanationsB !== "object"
-    ) {
-      console.error("Model did not return expected tag shape. Raw:", cleaned.slice(0, 2000));
-      // fallback generic neutral response
-      return res.status(200).json({
-        percentage: 50,
-        message: "AI failed to extract thought-level tags reliably; fallback neutral score returned."
-      });
-    }
+    // Validate structure - adjusted for new field names
+    const valid =
+      parsed &&
+      parsed.personA &&
+      parsed.personB &&
+      parsed.thoughtAlignment &&
+      typeof parsed.compatibilityScore === "number" &&
+      typeof parsed.analysisExplanation === "string";
 
-    // Normalize tags: keep only canonical tags and unique
-    const normalize = arr =>
-      Array.from(new Set((arr || []).map(t => String(t).trim()).filter(t => TAXONOMY.includes(t))));
-
-    const tagsA = normalize(parsedTagsResp.tagsA);
-    const tagsB = normalize(parsedTagsResp.tagsB);
-    const explanationsA = parsedTagsResp.explanationsA || {};
-    const explanationsB = parsedTagsResp.explanationsB || {};
-
-    // Compute Jaccard-like similarity on sets of tags (if both empty -> fallback 50)
-    const setA = new Set(tagsA);
-    const setB = new Set(tagsB);
-    const intersection = tagsA.filter(t => setB.has(t));
-    const unionSize = new Set([...tagsA, ...tagsB]).size;
-
-    let percentage;
-    if (unionSize === 0) {
-      percentage = 50; // no tags found => neutral
-    } else {
-      // Jaccard similarity scaled to 0-100
-      percentage = Math.round((intersection.length / unionSize) * 100);
-      // slight boost if both have roughly similar depth (similar counts)
-      const countDiff = Math.abs(tagsA.length - tagsB.length);
-      if (countDiff <= 1 && unionSize > 0) percentage = Math.min(100, percentage + 5);
-    }
-
-    // Build one-paragraph emotional message referencing thought-level alignment (use explanations)
-    // Choose 2-3 strongest overlapping tags to mention, else cite notable differences.
-    function pickOverlap() {
-      if (intersection.length > 0) return intersection.slice(0, 3);
-      // pick top tags from each (first two)
-      const pick = [];
-      if (tagsA[0]) pick.push(tagsA[0]);
-      if (tagsB[0] && tagsB[0] !== tagsA[0]) pick.push(tagsB[0]);
-      return pick;
-    }
-
-    const overlap = pickOverlap();
-    let message = "";
-
-    if (intersection.length > 0) {
-      // create explanation snippets for up to 3 overlapping tags
-      const expls = overlap.map(tag => {
-        const ea = explanationsA[tag] ? explanationsA[tag] : "";
-        const eb = explanationsB[tag] ? explanationsB[tag] : "";
-        // prefer combined short phrase
-        const combined = [ea, eb].filter(Boolean).join(" / ");
-        return `${humanizeTag(tag)} (${combined || "shared focus"})`;
-      });
-      message = `Their answers align on ${expls.join(", ")} — showing shared underlying values and priorities; this thought-level overlap produced a compatibility score of ${percentage}.`;
-    } else {
-      // find a couple of contrasting tags to highlight
-      const aTop = tagsA[0] ? `${humanizeTag(tagsA[0])}: ${explanationsA[tagsA[0]] || ""}` : null;
-      const bTop = tagsB[0] ? `${humanizeTag(tagsB[0])}: ${explanationsB[tagsB[0]] || ""}` : null;
-      const parts = [aTop, bTop].filter(Boolean);
-      if (parts.length) {
-        message = `Their core beliefs differ: ${parts.join(" ; ")} — this indicates different underlying priorities, which lowered the compatibility to ${percentage}.`;
+    if (!valid) {
+      if (process.env.DEV === "true") {
+        return res.status(200).json({
+          percentage: 50,
+          message: "Model output not in expected shape; debug included.",
+          debug: { rawApiResponse: apiResp, textCandidates, jsonText, parsed }
+        });
       } else {
-        message = `The responses did not map clearly to shared relationship values; the system gives a neutral compatibility of ${percentage}.`;
+        return res.status(200).json({ 
+          percentage: 50, 
+          message: "Unable to analyze compatibility at this time." 
+        });
       }
     }
 
-    // Return only the required JSON
-    return res.status(200).json({ percentage, message });
-
-    // helper to make tag human-friendly
-    function humanizeTag(tag) {
-      if (!tag) return tag;
-      return tag
-        .split("_")
-        .map(s => s[0].toUpperCase() + s.slice(1))
-        .join(" ");
+    // Use AI-provided score with validation
+    const percentage = Math.max(0, Math.min(100, Math.round(parsed.compatibilityScore)));
+    
+    // Build rich, natural message from thought analysis
+    const shared = parsed.thoughtAlignment.sharedBeliefs || [];
+    const divergent = parsed.thoughtAlignment.divergentBeliefs || [];
+    
+    // Start with AI's core explanation
+    let message = parsed.analysisExplanation || "";
+    
+    // Add specific belief alignment examples (more natural flow)
+    if (shared.length > 0) {
+      const topShared = shared.slice(0, 2);
+      const sharedText = topShared.map(s => 
+        `Both value ${s.beliefTheme.toLowerCase()}: ${s.whyItMatches}`
+      ).join(" ");
+      message += ` ${sharedText}`;
     }
+    
+    // Add tension points if they exist
+    if (divergent.length > 0 && percentage < 70) {
+      const topDivergent = divergent[0];
+      message += ` However, they differ on ${topDivergent.beliefTheme.toLowerCase()}: ${topDivergent.tension}`;
+    }
+
+    // Add emotional context based on score range
+    if (percentage >= 80) {
+      message += " This deep alignment suggests strong potential for mutual understanding.";
+    } else if (percentage >= 60) {
+      message += " These differences are workable with open communication.";
+    } else if (percentage < 40) {
+      message += " These core differences may require significant compromise.";
+    }
+
+    // Add debug info if requested
+    const response = { percentage, message };
+    if (process.env.DEV === "true") {
+      response.debug = {
+        personA: parsed.personA,
+        personB: parsed.personB,
+        thoughtAlignment: parsed.thoughtAlignment
+      };
+    }
+
+    return res.status(200).json(response);
   } catch (err) {
     console.error("evaluate error:", err);
     return res.status(500).json({ error: "Server error", details: String(err) });
