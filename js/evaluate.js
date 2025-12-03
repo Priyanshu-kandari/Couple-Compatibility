@@ -12,24 +12,38 @@ export default async function handler(req, res) {
     // Use a model your key supports; change if your ListModels showed different model
     const MODEL = "models/gemini-2.5-flash";
 
-    const prompt = `
-You are a relationship compatibility evaluator.
-Return ONLY a JSON object exactly in this shape:
+    const prompt = `You are an expert relationship counselor and compatibility analyst.
+
+You will be given two people's answers to 3 questions:
+1. What does love mean to you?
+2. What makes a relationship strong?
+3. What is a deal-breaker for you?
+
+Your task:
+- Understand emotional depth, values, expectations, lifestyle choices, red flags, maturity level, and long-term compatibility.
+- Compare how similar or different both partners are in each answer.
+- Detect alignment vs conflict (e.g., one wants freedom, the other wants loyalty; one is expressive, the other is silent).
+- Evaluate clarity, honesty, emotional intelligence, and relationship awareness.
+
+Then produce a compatibility score from 0 to 100.
+
+Score Guide:
+- 90–100 → Exceptional alignment; long-term compatibility strong  
+- 75–89 → Very compatible; minor differences  
+- 55–74 → Moderate compatibility; requires communication  
+- 35–54 → Low compatibility; major differences  
+- 0–34 → Very low compatibility; conflicting values
+
+Finally, output JSON ONLY (no backticks, no explanation).
+
+STRICT JSON FORMAT:
 {
-  "percentage": number between 0 and 100,
-  "message": "short explanation (max 120 chars)"
+  "percentage": number,
+  "message": "one-paragraph emotional explanation summarizing why this score was given"
 }
 
-Partner A:
-1. ${a.q1}
-2. ${a.q2}
-3. ${a.q3}
-
-Partner B:
-1. ${b.q1}
-2. ${b.q2}
-3. ${b.q3}
-    `;
+DO NOT include backticks, DO NOT include extra text outside JSON.
+`;
 
     const url = `https://generativelanguage.googleapis.com/v1/${MODEL}:generateContent?key=${AI_KEY}`;
     const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
