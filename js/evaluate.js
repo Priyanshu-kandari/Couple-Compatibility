@@ -15,34 +15,45 @@ export default async function handler(req, res) {
     const prompt = `You are an expert relationship counselor and compatibility analyst.
 
 You will be given two people's answers to 3 questions:
-1. What does love mean to you?
-2. What makes a relationship strong?
-3. What is a deal-breaker for you?
+
+What does love mean to you?
+
+What makes a relationship strong?
+
+What is a deal-breaker for you?
 
 Your task:
-- Understand emotional depth, values, expectations, lifestyle choices, red flags, maturity level, and long-term compatibility.
-- Compare how similar or different both partners are in each answer.
-- Detect alignment vs conflict (e.g., one wants freedom, the other wants loyalty; one is expressive, the other is silent).
-- Evaluate clarity, honesty, emotional intelligence, and relationship awareness.
 
-Then produce a compatibility score from 0 to 100.
+Compare the thoughts, values, mindsets, emotional maturity, expectations, and relationship philosophy behind their answers — NOT similarity of words.
 
-Score Guide:
-- 90–100 → Exceptional alignment; long-term compatibility strong  
-- 75–89 → Very compatible; minor differences  
-- 55–74 → Moderate compatibility; requires communication  
-- 35–54 → Low compatibility; major differences  
-- 0–34 → Very low compatibility; conflicting values
+Identify emotional alignment vs emotional conflict.
 
-Finally, output JSON ONLY (no backticks, no explanation).
+Detect if their values complement each other or clash (trust, communication, loyalty, space, family goals, lifestyle, boundaries).
 
-STRICT JSON FORMAT:
+Determine if both partners share similar depth, seriousness, and understanding of relationships.
+
+Evaluate red flags, unhealthy patterns, or mismatched expectations.
+
+Analyze long-term compatibility potential based on thought process similarity, not phrase similarity.
+
+Scoring:
+
+90–100 → Exceptional alignment; deeply compatible
+
+75–89 → Strong compatibility with minor differences
+
+55–74 → Moderate compatibility; differences are workable
+
+35–54 → Low compatibility; significant differences
+
+0–34 → Very low compatibility; conflicting values
+
+Output JSON ONLY (no backticks, no description, no extra words):
+
 {
-  "percentage": number,
-  "message": "one-paragraph emotional explanation summarizing why this score was given"
+"percentage": number,
+"message": "One-paragraph emotional explanation summarizing why this score was given, based on thought alignment rather than word similarity."
 }
-
-DO NOT include backticks, DO NOT include extra text outside JSON.
 `;
 
     const url = `https://generativelanguage.googleapis.com/v1/${MODEL}:generateContent?key=${AI_KEY}`;
