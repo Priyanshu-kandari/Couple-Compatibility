@@ -18,14 +18,30 @@ export default async function handler(req, res) {
     // Change model if needed based on your key's supported models
     const MODEL = "models/gemini-2.5-flash";
 
-    // Build a prompt that includes the answers to be compared
-    const prompt = `You are an expert relationship counselor and compatibility analyst.
+    // Build a prompt that includes the answers to be compared (REPLACE your existing prompt variable with this)
+const prompt = `SYSTEM: You are an expert relationship counselor and compatibility analyst. Your output must be JSON only (no markdown, no commentary) in the exact shape:
+{"percentage": number, "message": "one-paragraph emotional explanation"}
 
-You will be given two people's answers to 3 questions:
+INSTRUCTIONS (read carefully and follow exactly):
+- DO NOT base your comparison on word overlap, shared phrases, or sentence-level similarity.
+- IGNORE lexical similarity. Focus entirely on the underlying THOUGHTS, VALUES, EMOTIONAL DRIVERS, PRIORITIES, EXPECTATIONS, AND RELATIONSHIP PHILOSOPHY revealed by the answers.
+- Consider these dimensions (internally): trust, communication style, emotional maturity, expectations about effort, need for space vs closeness, boundaries, family/life goals, and attitude toward conflict. Do NOT print the list—use it to reason.
+- When scoring, use only thought-level alignment. Two answers that use different words but express the same core belief should be treated as aligned. Two answers that use the same words but imply different priorities or emotional drivers should be treated as misaligned.
+- Output must be compact JSON only. The message field must be a single paragraph explaining, emotionally, WHY the score was given, referencing thought alignment (not wording).
 
-What does love mean to you?
-What makes a relationship strong?
-What is a deal-breaker for you?
+EXAMPLES (these are EXAMPLES to show what you must do — do NOT output these examples in your response):
+
+Example 1 (different words, same thought) — treat as aligned:
+Person A: "Love is when I feel safe and known; someone who truly accepts me." 
+Person B: "To me, love is being able to be myself without fear; it’s acceptance and comfort."
+=> These are the same underlying thought (emotional safety & acceptance) and should score high.
+
+Example 2 (same words, different thought) — treat as misaligned:
+Person A: "I want honesty and openness." (meaning: emotional transparency, sharing feelings)
+Person B: "I want honesty and openness." (meaning: I expect my partner to accept my choices and not question them)
+=> Word overlap is present but the implied expectations differ — treat as lower alignment.
+
+Now: YOU ARE GIVEN THE ACTUAL INPUTS BELOW. Use ONLY the content under "Person A answers" and "Person B answers" for the evaluation. Do NOT invent facts.
 
 Person A answers:
 ${typeof a === "string" ? a : JSON.stringify(a, null, 2)}
@@ -33,28 +49,13 @@ ${typeof a === "string" ? a : JSON.stringify(a, null, 2)}
 Person B answers:
 ${typeof b === "string" ? b : JSON.stringify(b, null, 2)}
 
-Your task:
-Compare the thoughts, values, mindsets, emotional maturity, expectations, and relationship philosophy behind their answers — NOT similarity of words.
+TASK:
+- Analyze underlying beliefs, priorities, and emotional drivers behind each answer.
+- Decide whether their values complement or clash (trust, communication, loyalty, space, family goals, lifestyle, boundaries).
+- Determine if they have similar depth/seriousness about relationships.
+- Evaluate red flags, unhealthy patterns, or mismatched expectations.
+- Return only the JSON with numeric percentage (0-100) and a one-paragraph emotional justification referencing thought alignment (NOT word similarity).`;
 
-Identify emotional alignment vs emotional conflict.
-Detect if their values complement each other or clash (trust, communication, loyalty, space, family goals, lifestyle, boundaries).
-Determine if both partners share similar depth, seriousness, and understanding of relationships.
-Evaluate red flags, unhealthy patterns, or mismatched expectations.
-Analyze long-term compatibility potential based on thought process similarity, not phrase similarity.
-
-Scoring:
-90–100 → Exceptional alignment; deeply compatible
-75–89 → Strong compatibility with minor differences
-55–74 → Moderate compatibility; differences are workable
-35–54 → Low compatibility; significant differences
-0–34 → Very low compatibility; conflicting values
-
-Output JSON ONLY (no backticks, no description, no extra words):
-{
-  "percentage": number,
-  "message": "One-paragraph emotional explanation summarizing why this score was given, based on thought alignment rather than word similarity."
-}
-`;
 
     const url = `https://generativelanguage.googleapis.com/v1/${MODEL}:generateContent?key=${AI_KEY}`;
     const payload = {
